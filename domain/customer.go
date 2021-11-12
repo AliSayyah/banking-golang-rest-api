@@ -5,10 +5,11 @@ type Customer struct {
 	Name        string
 	City        string
 	Status      string
-	Zipcode     string
+	ZipCode     string
 	DateOfBirth string
 }
 
 type CustomerRepository interface {
 	FindAll() ([]Customer, error)
+	FindByID(int) (*Customer, error)
 }

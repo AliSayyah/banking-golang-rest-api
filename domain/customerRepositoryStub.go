@@ -8,7 +8,7 @@ func (s CustomerRepositoryStub) FindAll() ([]Customer, error) {
 	return s.customers, nil
 }
 
-func NewCustomerRepositoryStub() CustomerRepositoryStub {
+func _() CustomerRepositoryStub {
 	return CustomerRepositoryStub{
 		customers: []Customer{
 			{
@@ -16,7 +16,7 @@ func NewCustomerRepositoryStub() CustomerRepositoryStub {
 				Name:        "John",
 				City:        "New York",
 				Status:      "Active",
-				Zipcode:     "10001",
+				ZipCode:     "10001",
 				DateOfBirth: "01/01/1990",
 			},
 			{
@@ -24,7 +24,7 @@ func NewCustomerRepositoryStub() CustomerRepositoryStub {
 				Name:        "Jane",
 				City:        "New York",
 				Status:      "Active",
-				Zipcode:     "10001",
+				ZipCode:     "10001",
 				DateOfBirth: "01/01/1990",
 			},
 			{
@@ -32,7 +32,7 @@ func NewCustomerRepositoryStub() CustomerRepositoryStub {
 				Name:        "Jack",
 				City:        "New York",
 				Status:      "Active",
-				Zipcode:     "10001",
+				ZipCode:     "10001",
 				DateOfBirth: "01/01/1990",
 			},
 		},
