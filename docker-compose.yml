@@ -1,7 +1,21 @@
 version: "3.8"
 services:
+  app:
+    container_name:
+      banking-web
+    image: banking-web
+    build:
+      dockerfile: ./.build/Dockerfile
+      context: .
+      target: development
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
   db:
     image: mysql:latest
+    container_name:
+      banking-db
     restart: always
     env_file:
       - ./.env
