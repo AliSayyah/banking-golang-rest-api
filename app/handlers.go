@@ -2,8 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"encoding/xml"
-	"fmt"
 	"github.com/AliSayyah/banking/service"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -20,26 +18,15 @@ type CustomerHandlers struct {
 	service service.CustomerService
 }
 
-func (ch *CustomerHandlers) getAllCustomers(w http.ResponseWriter, r *http.Request) {
+func (ch *CustomerHandlers) getAllCustomers(w http.ResponseWriter, _ *http.Request) {
 	// handler for /customers
 	customers, err := ch.service.GetAllCustomers()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if r.Header.Get("Content-Type") == "application/xml" {
-		w.Header().Add("Content-Type", "application/xml")
-		err := xml.NewEncoder(w).Encode(customers)
-		if err != nil {
-			return
-		}
-	} else {
-		w.Header().Add("Content-Type", "application/json")
-		err := json.NewEncoder(w).Encode(customers)
-		if err != nil {
-			return
-		}
-	}
+
+	writeResponse(w, http.StatusOK, customers)
 }
 
 func (ch *CustomerHandlers) getCustomer(w http.ResponseWriter, r *http.Request) {
@@ -50,16 +37,20 @@ func (ch *CustomerHandlers) getCustomer(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	customer, err := ch.service.GetCustomer(id)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = fmt.Fprint(w, err.Error())
+	customer, errs := ch.service.GetCustomer(id)
+	if errs != nil {
+		writeResponse(w, http.StatusNotFound, errs.AsMessage())
 		return
 	}
 
+	writeResponse(w, http.StatusOK, customer)
+}
+
+func writeResponse(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(customer)
+	w.WriteHeader(code)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		return
+		panic(err)
 	}
 }

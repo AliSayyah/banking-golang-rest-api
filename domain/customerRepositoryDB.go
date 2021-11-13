@@ -69,7 +69,7 @@ func GetDSN() string {
 	return mysqlUser + ":" + MysqlPassword + "@tcp(" + mysqlHost + ":" + mysqlPort + ")/" + mysqlDB
 }
 
-func (d CustomerRepositoryDB) FindByID(id int) (*Customer, error) {
+func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
 	findByIDSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE customer_id = ?"
 	row := d.client.QueryRow(findByIDSQL, id)
 	var c Customer
