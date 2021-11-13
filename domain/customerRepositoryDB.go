@@ -15,17 +15,17 @@ type CustomerRepositoryDB struct {
 	client *sql.DB
 }
 
-func (d CustomerRepositoryDB) FindAll() ([]Customer, error) {
+func (d CustomerRepositoryDB) FindAll() ([]Customer, *errs.AppError) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, err
+		return nil, errs.NewUnexpectedError("unexpected database error")
 	}
 
 	findAllSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers;"
 	rows, err := d.client.Query(findAllSQL)
 	if err != nil {
 		log.Println("Error while querying customer table " + err.Error())
-		return nil, err
+		return nil, errs.NewUnexpectedError("unexpected database error")
 	}
 	customers := make([]Customer, 0)
 	for rows.Next() {
@@ -33,11 +33,26 @@ func (d CustomerRepositoryDB) FindAll() ([]Customer, error) {
 		err := rows.Scan(&c.ID, &c.Name, &c.City, &c.ZipCode, &c.DateOfBirth, &c.Status)
 		if err != nil {
 			log.Println("Error while scanning customer table " + err.Error())
-			return nil, err
+			return nil, errs.NewUnexpectedError("unexpected database error")
 		}
 		customers = append(customers, c)
 	}
 	return customers, nil
+}
+
+func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
+	findByIDSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE customer_id = ?"
+	row := d.client.QueryRow(findByIDSQL, id)
+	var c Customer
+	err := row.Scan(&c.ID, &c.Name, &c.City, &c.ZipCode, &c.DateOfBirth, &c.Status)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errs.NewNotFoundError("Customer not found")
+		}
+		log.Println("Error while scanning customer table " + err.Error())
+		return nil, errs.NewUnexpectedError("unexpected database error")
+	}
+	return &c, nil
 }
 
 func NewCustomerRepositoryDB() CustomerRepositoryDB {
@@ -67,19 +82,4 @@ func GetDSN() string {
 	mysqlPort := os.Getenv("MYSQL_PORT")
 
 	return mysqlUser + ":" + MysqlPassword + "@tcp(" + mysqlHost + ":" + mysqlPort + ")/" + mysqlDB
-}
-
-func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
-	findByIDSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE customer_id = ?"
-	row := d.client.QueryRow(findByIDSQL, id)
-	var c Customer
-	err := row.Scan(&c.ID, &c.Name, &c.City, &c.ZipCode, &c.DateOfBirth, &c.Status)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errs.NewNotFoundError("Customer not found")
-		}
-		log.Println("Error while scanning customer table " + err.Error())
-		return nil, errs.NewUnexpectedError("unexpected database error")
-	}
-	return &c, nil
 }

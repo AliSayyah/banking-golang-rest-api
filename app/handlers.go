@@ -22,7 +22,8 @@ func (ch *CustomerHandlers) getAllCustomers(w http.ResponseWriter, _ *http.Reque
 	// handler for /customers
 	customers, err := ch.service.GetAllCustomers()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeResponse(w, err.Code, err.AsMessage())
+
 		return
 	}
 
