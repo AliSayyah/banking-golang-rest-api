@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/AliSayyah/banking/domain"
+	"github.com/AliSayyah/banking/logger"
 	"github.com/AliSayyah/banking/service"
 	"github.com/gorilla/mux"
 	"log"
@@ -9,7 +10,7 @@ import (
 )
 
 func Start() {
-	log.Println("Starting server on port 8000")
+	logger.Info("Starting server on port 8000")
 
 	router := mux.NewRouter()
 	// wiring

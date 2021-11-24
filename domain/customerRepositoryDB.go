@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/AliSayyah/banking/errs"
+	"github.com/AliSayyah/banking/logger"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -15,28 +17,28 @@ type CustomerRepositoryDB struct {
 	client *sql.DB
 }
 
-func (d CustomerRepositoryDB) FindAll() ([]Customer, *errs.AppError) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, errs.NewUnexpectedError("unexpected database error")
+func (d CustomerRepositoryDB) FindAll(status string) ([]Customer, *errs.AppError) {
+	var findAllSQL string
+	var rows *sql.Rows
+	var err error
+	if status == "" {
+		findAllSQL = "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers;"
+		rows, err = d.client.Query(findAllSQL)
+	} else {
+		findAllSQL = "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE status = ?;"
+		rows, err = d.client.Query(findAllSQL, status)
 	}
-
-	findAllSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers;"
-	rows, err := d.client.Query(findAllSQL)
 	if err != nil {
-		log.Println("Error while querying customer table " + err.Error())
+		logger.Error("Error while querying customer table " + err.Error())
 		return nil, errs.NewUnexpectedError("unexpected database error")
 	}
 	customers := make([]Customer, 0)
-	for rows.Next() {
-		var c Customer
-		err := rows.Scan(&c.ID, &c.Name, &c.City, &c.ZipCode, &c.DateOfBirth, &c.Status)
-		if err != nil {
-			log.Println("Error while scanning customer table " + err.Error())
-			return nil, errs.NewUnexpectedError("unexpected database error")
-		}
-		customers = append(customers, c)
+	err = sqlx.StructScan(rows, &customers)
+	if err != nil {
+		logger.Error("Error while scanning customer table " + err.Error())
+		return nil, errs.NewUnexpectedError("unexpected database error")
 	}
+
 	return customers, nil
 }
 
