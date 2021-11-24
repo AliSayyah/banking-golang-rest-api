@@ -14,28 +14,22 @@ import (
 )
 
 type CustomerRepositoryDB struct {
-	client *sql.DB
+	client *sqlx.DB
 }
 
 func (d CustomerRepositoryDB) FindAll(status string) ([]Customer, *errs.AppError) {
 	var findAllSQL string
-	var rows *sql.Rows
 	var err error
+	customers := make([]Customer, 0)
 	if status == "" {
 		findAllSQL = "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers;"
-		rows, err = d.client.Query(findAllSQL)
+		err = d.client.Select(&customers, findAllSQL)
 	} else {
 		findAllSQL = "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE status = ?;"
-		rows, err = d.client.Query(findAllSQL, status)
+		err = d.client.Select(&customers, findAllSQL, status)
 	}
 	if err != nil {
 		logger.Error("Error while querying customer table " + err.Error())
-		return nil, errs.NewUnexpectedError("unexpected database error")
-	}
-	customers := make([]Customer, 0)
-	err = sqlx.StructScan(rows, &customers)
-	if err != nil {
-		logger.Error("Error while scanning customer table " + err.Error())
 		return nil, errs.NewUnexpectedError("unexpected database error")
 	}
 
@@ -44,9 +38,8 @@ func (d CustomerRepositoryDB) FindAll(status string) ([]Customer, *errs.AppError
 
 func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
 	findByIDSQL := "SELECT customer_id, name, city, zipcode, date_of_birth, status FROM customers WHERE customer_id = ?"
-	row := d.client.QueryRow(findByIDSQL, id)
 	var c Customer
-	err := row.Scan(&c.ID, &c.Name, &c.City, &c.ZipCode, &c.DateOfBirth, &c.Status)
+	err := d.client.Get(&c, findByIDSQL, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("Customer not found")
@@ -58,7 +51,7 @@ func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
 }
 
 func NewCustomerRepositoryDB() CustomerRepositoryDB {
-	client, err := sql.Open("mysql", GetDSN())
+	client, err := sqlx.Open("mysql", GetDSN())
 	if err != nil {
 		panic(err)
 	}
