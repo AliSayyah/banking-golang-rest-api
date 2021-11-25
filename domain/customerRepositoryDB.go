@@ -7,10 +7,7 @@ import (
 	"github.com/AliSayyah/banking/logger"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/jmoiron/sqlx"
-	"github.com/joho/godotenv"
 	"log"
-	"os"
-	"time"
 )
 
 type CustomerRepositoryDB struct {
@@ -50,31 +47,8 @@ func (d CustomerRepositoryDB) FindByID(id int) (*Customer, *errs.AppError) {
 	return &c, nil
 }
 
-func NewCustomerRepositoryDB() CustomerRepositoryDB {
-	client, err := sqlx.Open("mysql", GetDSN())
-	if err != nil {
-		panic(err)
+func NewCustomerRepositoryDB(dbClient *sqlx.DB) CustomerRepositoryDB {
+	return CustomerRepositoryDB{
+		client: dbClient,
 	}
-	client.SetConnMaxLifetime(time.Minute * 3)
-	client.SetMaxOpenConns(10)
-	client.SetMaxIdleConns(10)
-	return CustomerRepositoryDB{client: client}
-}
-
-func GetDSN() string {
-	// load .env file and get environment variables
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	// get database connection string
-	mysqlUser := os.Getenv("MYSQL_USER")
-	MysqlPassword := os.Getenv("MYSQL_PASSWORD")
-	mysqlDB := os.Getenv("MYSQL_DATABASE")
-	mysqlHost := os.Getenv("MYSQL_HOST")
-	mysqlPort := os.Getenv("MYSQL_PORT")
-
-	return mysqlUser + ":" + MysqlPassword + "@tcp(" + mysqlHost + ":" + mysqlPort + ")/" + mysqlDB
 }

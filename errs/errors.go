@@ -18,3 +18,7 @@ func NewNotFoundError(message string) *AppError {
 func NewUnexpectedError(message string) *AppError {
 	return &AppError{http.StatusInternalServerError, message}
 }
+
+func NewValidationError(message string) *AppError {
+	return &AppError{http.StatusUnprocessableEntity, message}
+}
